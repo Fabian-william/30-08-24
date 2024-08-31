@@ -1,0 +1,46 @@
+ai(diff):-
+
+ml:-
+int,float,str,float.
+01
+
+
+dl:-
+img,video,audio,signal.
+01,+{layer}
+
+
+
+image processing:-
+
+first wwe will give a picture and then it will convert that image into 0 and 1 it will process that that image and then gives the output 
+and this process is also called as encryption and decreption process. it is a grid technology.
+
+VIDEO PROCESSING:-
+SAME AS IMAGE PROCESSING.
+
+AUDIO PROCESSING:-
+SAME AS IMAGEPROCESSING. IT TALES IN A WAVE FORMAT.
+
+
+3D CAD-
+ IT IS USED IN SUBWAY SUFER GAME LIKE THE BOY IS RUNNING IN THE SAME PLACE. ONLY THE BACKGROUND IS MOVING.
+
+
+cientific and numeric)
+AI it has two types ML and DL
+In ML it takes string,integer,float,etc..it convert 0 and 1 easily  in str it converted using NPL
+
+In DL it takes image,video,audio ,signal it convert  0 and 1 with (layers) with the process name Grid
+In this grid process it marks the the image is present then (1) otherwise (0) in graph
+
+From input to output =encode and encryption 
+From output to input=decode and decryption
+ (Audio and video)
+In audio call it takes only audio 
+but in vc it takes both frequency ,sound, visual 
+(3D cad)
+Whereas temple run is a 2D game it was move in single place
+This 3D cad are mostly used by the civil engineers for constrction
+(Enterprise application)
+It is used for entrepreneur for developing the product
