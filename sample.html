@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>⚡️ TurboTodo – Light & Dark</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+/* Google font – Poppins (fallback sans-serif) */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+:root {
+  /* Light theme */
+  --bg: #f9f9f9;
+  --card: #fff;
+  --text: #222;
+  --accent: #ff5a5f;      /* vibrant red – used for btns & tags */
+  --accent-light: #ffd6d6;
+  --accent-dark: #c84f53;
+  --shadow: 0 2px 8px rgba(0,0,0,.05);
+  --primary: #6366f1;     /* Indiglow, cool */
+  --primary-dark: #4c51d5;
+  --border: rgba(0,0,0,.1);
+}
+
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --card: #2b2b2b;
+  --text: #e0e0e0;
+  --accent: #ff5a5f;
+  --accent-light: #800000;
+  --accent-dark: #ff914d;
+  --shadow: 0 2px 8px rgba(0,0,0,.4);
+  --primary: #9ca3ff;
+  --primary-dark: #6366f1;
+  --border: rgba(255,255,255,.1);
+}
+
+/* Global reset & fonts */
+*{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;}
+body{
+  font-family:'Poppins',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  transition:background .3s;
+}
+
+/* Header */
+header{
+  background:var(--card);
+  padding:1rem 2rem;
+  box-shadow:var(--shadow);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  position:sticky; top:0;
+  z-index:1000;
+}
+h1{font-weight:600; font-size:1.75rem;}
+.toggle{
+  cursor:pointer;
+  font-size:1.25rem;
+  transition:transform .3s;
+}
+.toggle:hover{transform:scale(1.1);}
+
+/* Main area */
+main{
+  flex:1;
+  padding:1.5rem 2rem;
+  max-width:800px;
+  margin:auto;
+  width:100%;
+}
+
+/* Add Task */
+.add-task{
+  display:flex;
+  margin:1rem 0;
+  gap:.5rem;
+}
+.add-task input{
+  flex:1;
+  padding:.75rem 1rem;
+  border:1px solid var(--border);
+  border-radius:.5rem;
+  font-size:1rem;
+  transition:border-color .3s;
+}
+.add-task input:focus{outline:none;border-color:var(--primary);}
+
+.add-task button{
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  cursor:pointer;
+  font-size:1rem;
+  padding:.75rem 1.25rem;
+  border-radius:.5rem;
+  transition:background .3s,transform .2s;
+}
+.add-task button:hover{
+  background:var(--accent-dark);
+  transform:scale(1.05);
+}
+
+.tag-input{
+  flex:1;
+  display:flex;
+  flex-wrap:wrap;
+  gap:.5rem;
+}
+.tag{
+  background:var(--accent-light);
+  color:var(--accent-dark);
+  font-size:.75rem;
+  padding:.25rem .5rem;
+  border-radius:.25rem;
+  cursor:pointer;
+  transition:background .3s,transform .2s;
+}
+.tag:hover{background:var(--accent-dark); color:#fff; transform:scale(1.05);}
+.tag-remove{margin-left:.5rem; cursor:pointer;}
+
+/* Task list */
+.task-list{list-style:none;}
+.task{
+  background:var(--card);
+  padding:1rem;
+  margin-bottom:.75rem;
+  border-radius:.75rem;
+  box-shadow:var(--shadow);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  transition:transform .2s;
+  cursor:grab;
+}
+.task.dragging{opacity:.4; transform:scale(.97);}
+.task:hover{transform:scale(1.01);}
+
+.task-content{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:.25rem;
+}
+.task-text{
+  font-size:1rem;
+  flex:1;  /* Make text take remaining space */
+}
+.task-text.completed{text-decoration:line-through;color:var(--border);}
+.input-container{
+  display:flex;
+  gap:.5rem;
+}
+
+.task-actions{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+}
+.task-actions button{
+  border:none;background:none;cursor:pointer;
+  font-size:1.25rem; color:var(--border); transition:color .3s;
+}
+.task-actions button:hover{color:var(--accent);}
+
+/* Tag display on task */
+.task-tags{display:flex; gap:.5rem; flex-wrap:wrap;}
+.task-tags .tag{font-size:.7rem;}
+
+/* Animations */
+@keyframes fadeIn{0%{opacity:0;transform:translateY(20px);}100%{opacity:1;transform:translateY(0);}}
+.task{animation:fadeIn .3s ease forwards;}
+</style>
+</head>
+<body data-theme="light">
+<header>
+  <h1>⚡️ TurboTodo</h1>
+  <span class="toggle" title="Toggle Dark Mode" id="themeBtn">🌙</span>
+</header>
+<main>
+  <!-- Add task -->
+  <div class="add-task">
+    <input type="text" id="newTaskInput" placeholder="What’s next?">
+    <input type="text" id="newTagInput" placeholder="Tag (optional)">
+    <button id="addBtn">Add</button>
+  </div>
+  <!-- Task list -->
+  <ul class="task-list" id="taskList"></ul>
+</main>
+
+<script>
+/* ---------- UTILS ---------- */
+const STORAGE_KEY = 'turboTodo.tasks';
+const taskId = (()=>{let i=0; return ()=>`task-${++i}`;})();
+
+/* ---------- THEME SWITCHER ---------- */
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', () => {
+  const current = document.body.dataset.theme;
+  const newTheme = current === 'light' ? 'dark' : 'light';
+  document.body.dataset.theme = newTheme;
+  themeBtn.textContent = newTheme === 'light' ? '🌙' : '☀️';
+});
+
+/* ---------- TASK OBJECT ---------- */
+class Task {
+  constructor(text, tag='') {
+    this.id = taskId();
+    this.text = text;
+    this.tag = tag;
+    this.completed = false;
+  }
+}
+
+/* ---------- LOCAL STORAGE ---------- */
+function saveTasks(){localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));}
+function loadTasks(){
+  const data = localStorage.getItem(STORAGE_KEY);
+  return data ? JSON.parse(data).map(t => ({...t})) : [];
+}
+
+/* ---------- STATE ---------- */
+let tasks = loadTasks();
+
+/* ---------- RENDER ---------- */
+function renderTask(task){
+  const li = document.createElement('li'); li.className='task'; li.setAttribute('draggable','true');
+  li.dataset.id = task.id;
+  li.innerHTML=`
+    <div class="task-content">
+      <div class="task-text">${task.text}</div>
+      ${task.tag ? `<div class="task-tags"><span class="tag">${task.tag}</span></div>` : ''}
+    </div>
+    <div class="task-actions">
+      <button title="Toggle Done" class="doneBtn">☑️</button>
+      <button title="Delete" class="delBtn">🗑️</button>
+    </div>`;
+  // Completed state
+  if(task.completed) li.querySelector('.task-text').classList.add('completed');
+
+  // Toggle Done
+  li.querySelector('.doneBtn').addEventListener('click', () => {
+    task.completed = !task.completed;
+    li.querySelector('.task-text').classList.toggle('completed');
+    saveTasks();
+  });
+
+  // Delete
+  li.querySelector('.delBtn').addEventListener('click', () => {
+    tasks = tasks.filter(t=>t.id!==task.id);
+    li.remove(); saveTasks();
+  });
+
+  /* ---------- DRAG & DROP ---------- */
+  li.addEventListener('dragstart', e=>{
+    li.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', task.id);
+  });
+  li.addEventListener('dragend', ()=>li.classList.remove('dragging'));
+
+  return li;
+}
+
+function clearTaskList(){document.getElementById('taskList').innerHTML='';}
+function renderAll(){
+  clearTaskList();
+  const ul=document.getElementById('taskList');
+  tasks.forEach(task=>ul.appendChild(renderTask(task)));
+}
+renderAll();
+
+/* ---------- ADD TASK ---------- */
+document.getElementById('addBtn').addEventListener('click', addNewTask);
+document.getElementById('newTaskInput').addEventListener('keydown', e=>{
+  if(e.key==='Enter') addNewTask();
+});
+function addNewTask(){
+  const textInp=document.getElementById('newTaskInput');
+  const tagInp=document.getElementById('newTagInput');
+  const text=textInp.value.trim();
+  const tag=tagInp.value.trim();
+  if(!text)return;
+  const task=new Task(text, tag);
+  tasks.push(task);
+  const ul=document.getElementById('taskList');
+  ul.appendChild(renderTask(task));
+  saveTasks();
+  textInp.value=''; tagInp.value='';
+}
+
+/* ---------- DROP HANDLING ---------- */
+document.addEventListener('dragover', e=>{
+  e.preventDefault();
+});
+document.addEventListener('drop', e=>{
+  e.preventDefault();
+  const draggedId = e.dataTransfer.getData('text/plain');
+  const droppedTarget = e.target.closest('.task');
+  if(!droppedTarget || draggedId===droppedTarget.dataset.id) return;
+  const draggedIndex = tasks.findIndex(t=>t.id===draggedId);
+  const droppedIndex = tasks.findIndex(t=>t.id===droppedTarget.dataset.id);
+  // Swap positions
+  [tasks[draggedIndex], tasks[droppedIndex]] = [tasks[droppedIndex], tasks[draggedIndex]];
+  renderAll();
+  saveTasks();
+});
+
+/* ---------- SEO & Accessibility Enhancements ---------- */
+document.title = "TurboTodo – Light & Dark to-Do list with drag‑and‑drop";
+</script>
+</body>
+</html>
